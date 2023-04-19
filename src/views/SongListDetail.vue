@@ -31,7 +31,7 @@
       </div>
     </div>
     <div v-if="currentIndex == 1" class="content">
-      <Tracks :id="this.id"></Tracks>
+      <Tracks :id="this.id" :total="playlist.trackCount"></Tracks>
     </div>
     <div v-if="currentIndex == 2" class="content">
       <Comment :id="this.id"></Comment>

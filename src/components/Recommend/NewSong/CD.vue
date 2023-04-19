@@ -1,5 +1,5 @@
 <template>
-  <div class="cd" @click="toDetail">
+  <div class="cd">
     <div class="box">
       <div class="pic" :style="`backgroundImage:url(${CD.blurPicUrl});`">
         <img src="@/assets/static/icon/play_red.png" alt="" />
@@ -31,16 +31,7 @@ export default {
       },
     },
   },
-  methods: {
-    toDetail() {
-      // this.$router.push({
-      //   path: "songListDetail",
-      //   query: {
-      //     id: this.CD.id,
-      //   },
-      // });
-    },
-  },
+  methods: {},
 };
 </script>
 

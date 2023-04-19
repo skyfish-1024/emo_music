@@ -26,11 +26,6 @@ const routes = [
         component: () => import("../views/SongListDetail.vue"),
       },
       {
-        path: "/myLikedSongs",
-        name: "myLikedSongs",
-        component: () => import("../views/SongListDetail.vue"),
-      },
-      {
         path: "/edit",
         name: "edit",
         component: () => import("../views/EditUserInfo.vue"),

@@ -159,6 +159,7 @@ export default {
       localStorage.clear();
       this.isLogin = false;
       this.uid = "";
+      this.login();
     },
     cancel() {
       this.isShowUser = false;
@@ -196,6 +197,8 @@ export default {
             this.isShowUser = false;
             this.onConfirm = false;
             this.isLogin = true;
+            this.getUid();
+            this.getProfile();
             return;
           }
           if (res.data.code == 802) {
@@ -220,6 +223,9 @@ export default {
     },
     //获取id
     async getUid() {
+      if (!localStorage.getItem("cookie")) {
+        return;
+      }
       await this.$http
         .post(`/login/status?timestamp=${Date.now()}`, {
           cookie: localStorage.getItem("cookie"),
@@ -231,6 +237,9 @@ export default {
     },
     //获取账户信息
     async getProfile() {
+      if (!localStorage.getItem("cookie")) {
+        return;
+      }
       await this.$http.get(`/user/detail?uid=${this.uid}`).then((res) => {
         this.profile = res.data.profile;
       });
@@ -375,10 +384,12 @@ img,
 .tip1 {
   font-size: 0.4rem;
   margin: 0.45rem 0;
+  text-align: center;
 }
 .tip2 {
   font-size: 0.2rem;
   margin: 0.25rem 0;
+  text-align: center;
 }
 .userInfo {
   width: 100%;

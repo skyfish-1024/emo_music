@@ -5,6 +5,14 @@
       :key="item.commentId"
       :comment="item"
     ></CommentBox>
+    <el-pagination
+      background
+      layout="prev, pager, next"
+      :total="total"
+      :page-size="pageSize"
+      @current-change="pageChange"
+    >
+    </el-pagination>
   </div>
 </template>
 <script>
@@ -20,6 +28,9 @@ export default {
   data() {
     return {
       comments: [],
+      total: 0,
+      pageSize: 30,
+      pageNum: 0,
     };
   },
   created() {
@@ -27,32 +38,39 @@ export default {
   },
   methods: {
     async getComments() {
-      //   if (this.id == 0) {
-      //     await this.$http
-      //       .post(`/user/playlist?uid=${localStorage.getItem("uid")}`, {
-      //         cookie: localStorage.getItem("cookie"),
-      //       })
-      //       .then((res) => {
-      //         // console.log(res.data);
-      //         // console.log(localStorage.getItem("uid"));
-      //         // this.playlist = res.data.playlist[0];
-      //         this.id = res.data.playlist[0].id;
-      //       });
-      //   }
       await this.$http
-        .get(`/comment/playlist?id=${this.id}&limit=20&offset=1`, {
-          cookie: localStorage.getItem("cookie"),
-        })
+        .get(
+          `/comment/playlist?id=${this.id}&limit=${this.pageSize}&offset=${this.pageNum}`,
+          {
+            cookie: localStorage.getItem("cookie"),
+          }
+        )
         .then((res) => {
+          console.log(res.data);
+          this.total = res.data.total;
           this.comments = res.data.comments;
         });
+    },
+    pageChange(e) {
+      console.log(e);
+      this.pageNum = e - 1;
+      this.getComments();
     },
   },
 };
 </script>
 
-<style>
+<style lang="scss">
 .comment {
   overflow: auto;
+}
+.el-pagination {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+  margin-top: 0.3rem;
+  .active {
+    background-color: #ec4141 !important;
+  }
 }
 </style>

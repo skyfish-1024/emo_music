@@ -123,6 +123,7 @@
           :limit="1"
           auto-upload
           :http-request="uploadAvatar"
+          :show-file-list="false"
         >
           <div class="btn white">修改头像</div>
         </el-upload>
@@ -226,6 +227,7 @@ export default {
       }
       return days;
     },
+    //判断用户信息是否发生改变
     isChanged() {
       if (
         JSON.stringify(this.userInfo) == JSON.stringify(this.originUserInfo)
@@ -235,20 +237,39 @@ export default {
       return true;
     },
   },
+  watch: {
+    year() {
+      this.userInfo.birthday = new Date(
+        this.year,
+        this.month,
+        this.day
+      ).valueOf();
+    },
+    month() {
+      this.userInfo.birthday = new Date(
+        this.year,
+        this.month,
+        this.day
+      ).valueOf();
+    },
+    day() {
+      this.userInfo.birthday = new Date(
+        this.year,
+        this.month,
+        this.day
+      ).valueOf();
+    },
+  },
   async created() {
     // await this.getAreaList();
     await this.getUserInfo();
   },
   methods: {
-    // handleAvatarSuccess(response, file, fileList) {
-    //   console.log(response);
-    //   console.log(file);
-    // },
     uploadAvatar(v) {
       console.log(v);
       let data = new FormData();
       data.append("imgFile", v.file);
-      console.log(data.get("imgFile"));
+      // console.log(data.get("imgFile"));
       let imgFile = {
         name: v.file.name,
         data: v.file,
@@ -256,20 +277,28 @@ export default {
       this.$http
         .post(v.action, {
           headers: { "Content-Type": "multipart/form-data" },
-          imgSize: 1080, //图片尺寸,需要正方形图片
+          imgSize: 300, //图片尺寸,需要正方形图片
           cookie: localStorage.getItem("cookie"),
-          data,
+          imgFile,
         })
         .then((res) => {
           console.log(res.data);
+          if (res.data.code == 200) {
+            this.$message({
+              message: "修改成功",
+              type: "success",
+            });
+          } else {
+            this.$message({
+              message: "修改失败",
+              type: "error",
+            });
+          }
+
           // this.avatarUrl = res.data.data.url;
         });
     },
-    birthday() {
-      let birthday = new Date(this.year, this.month, this.day);
-      console.log(birthday.valueOf());
-      return birthday.valueOf();
-    },
+
     async checkNickname() {
       await this.$http
         .get(`/nickname/check?nickname=?timestamp=${Date.now()}`)
@@ -277,11 +306,11 @@ export default {
           console.log(res.data);
         });
     },
+    //更新用户信息
     async updateUserInfo() {
       if (!this.isChanged) {
         return;
       }
-      this.userInfo.birthday = this.birthday();
       await this.$http
         .post(
           `/user/update?uid=${localStorage.getItem(
@@ -294,7 +323,21 @@ export default {
           }
         )
         .then((res) => {
-          console.log(res.data);
+          // console.log(res.data);
+          if (res.data.code == 200) {
+            this.$message({
+              message: "修改成功",
+              type: "success",
+            });
+          } else {
+            this.$message({
+              message: "修改失败",
+              type: "error",
+            });
+          }
+        })
+        .catch((err) => {
+          console.log(err);
         });
     },
     async getUserInfo() {
@@ -308,7 +351,6 @@ export default {
           }
         )
         .then((res) => {
-          console.log(res.data.profile, Date.now());
           let profile = res.data.profile;
           this.avatarUrl = profile.avatarUrl;
           this.userInfo.nickname = profile.nickname;
@@ -327,7 +369,7 @@ export default {
           cookie: localStorage.getItem("cookie"),
         })
         .then((res) => {
-          console.log(res.data);
+          // console.log(res.data);
           //   console.log(localStorage.getItem("uid"));
           // this.playlist = res.data.playlist[0];
           //   this.id = res.data.playlist[0].id;
@@ -350,7 +392,7 @@ export default {
   .box {
     display: flex;
     .left {
-      width: 7rem;
+      min-width: 7rem;
       overflow: hidden;
       .row {
         font-size: 0.2rem;

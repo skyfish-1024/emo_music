@@ -127,7 +127,6 @@ export default {
   watch: {
     playlistId: {
       async handler(newVal, oldVal) {
-        console.log(newVal, oldVal);
         await this.getPlaylist();
         await this.getSongUrl();
         await this.getSong();
@@ -146,7 +145,6 @@ export default {
         })
         .then((res) => {
           this.playlist = res.data.songs;
-          console.log(this.playlist);
           this.currentIndex = 0;
           this.getSongUrl();
         });

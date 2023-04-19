@@ -6,54 +6,73 @@
     <div
       class="box"
       :class="current == 2 ? 'active' : ''"
-      @click="toMyLikedSongs"
+      @click="toSongListDetail(likedSongsId, 2)"
     >
       我喜欢的音乐
+    </div>
+    <div class="collection">
+      <div class="collectSongs" @click="isShowList">
+        收藏的歌单<Triangle :isOn="!isOn"></Triangle>
+      </div>
+      <div class="list" v-if="isOn">
+        <div
+          class="item"
+          :class="current == index + 3 ? 'active' : ''"
+          v-for="(item, index) in playlist"
+          :key="item.id"
+          @click="toSongListDetail(item.id, index + 3)"
+        >
+          {{ item.name }}
+        </div>
+      </div>
     </div>
   </div>
 </template>
     <script>
+import Triangle from "./Triangle.vue";
 export default {
+  components: { Triangle },
   data() {
     return {
+      isOn: false,
       current: 1,
-      path: [
-        {
-          name: "发现音乐",
-          path: "/home/recommend",
-        },
-        {
-          name: "我喜欢的音乐",
-          path: "/home/toMyLikedSongs",
-        },
-      ],
+      likedSongsId: 0,
+      playlist: [],
     };
   },
+  created() {
+    this.getPlaylist();
+  },
   methods: {
+    isShowList() {
+      this.isOn = !this.isOn;
+    },
+    //发现音乐
     toRecommend() {
       this.current = 1;
       this.$router.push("recommend");
     },
-    async toMyLikedSongs() {
+    //跳转歌单详情
+    async toSongListDetail(id, index) {
+      this.current = index;
+      this.$router.push({
+        path: "songListDetail",
+        query: {
+          id: id,
+        },
+      });
+    },
+    //获取用户歌单
+    async getPlaylist() {
       this.current = 2;
       await this.$http
         .post(`/user/playlist?uid=${localStorage.getItem("uid")}`, {
           cookie: localStorage.getItem("cookie"),
         })
         .then((res) => {
-          // console.log(res.data);
-          // console.log(localStorage.getItem("uid"));
-          // this.playlist = res.data.playlist[0];
-          // this.id = res.data.playlist[0].id;
-          this.$router.push({
-            path: "myLikedSongs",
-            query: {
-              id: res.data.playlist[0].id,
-            },
-          });
+          this.likedSongsId = res.data.playlist[0].id;
+          this.playlist = res.data.playlist.splice(1);
         });
-
-      // this.$router.push("myLikedSongs");
     },
   },
 };
@@ -69,6 +88,7 @@ export default {
   padding: 0.18rem;
   .box {
     cursor: pointer;
+    padding: 0;
     margin: 0;
     box-sizing: border-box;
     padding-left: 0.1rem;
@@ -81,6 +101,31 @@ export default {
   .active {
     background-color: #f6f6f7;
     font-weight: bold;
+  }
+}
+.collection {
+  font-size: 0.24rem;
+  .collectSongs {
+    color: #cccccc;
+    padding-left: 0.1rem;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+  }
+  .list {
+    .item {
+      cursor: pointer;
+      padding: 0.1rem 0;
+      padding-left: 0.1rem;
+      color: #313131;
+      font-weight: 100;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .active {
+      background-color: #f6f6f7;
+    }
   }
 }
 </style>

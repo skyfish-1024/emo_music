@@ -14,6 +14,8 @@ import {
   Upload,
   Progress,
   Pagination,
+  InfiniteScroll,
+  Message,
 } from "element-ui";
 
 Vue.use(Input)
@@ -27,4 +29,6 @@ Vue.use(Input)
   .use(FormItem)
   .use(Upload)
   .use(Progress)
-  .use(Pagination);
+  .use(Pagination)
+  .use(InfiniteScroll);
+Vue.prototype.$message = Message;
