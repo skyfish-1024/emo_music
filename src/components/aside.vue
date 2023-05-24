@@ -29,7 +29,7 @@
   </div>
 </template>
     <script>
-import Triangle from "./Triangle.vue";
+import Triangle from "./common/Triangle.vue";
 export default {
   components: { Triangle },
   data() {
@@ -43,18 +43,33 @@ export default {
   created() {
     this.getPlaylist();
   },
+  computed: {
+    subscribeChange() {
+      return this.$store.getters.getSubscribeTime;
+    },
+  },
+  watch: {
+    subscribeChange: {
+      async handler(newVal, oldVal) {
+        await this.getPlaylist();
+      },
+    },
+  },
   methods: {
     isShowList() {
       this.isOn = !this.isOn;
     },
-    //发现音乐
+    //跳转 发现音乐
     toRecommend() {
       this.current = 1;
-      this.$router.push("recommend");
+      this.$router.push("/recommend");
     },
-    //跳转歌单详情
+    //跳转 歌单详情
     async toSongListDetail(id, index) {
       this.current = index;
+      if (id == 0) {
+        this.current = 1;
+      }
       this.$router.push({
         path: "songListDetail",
         query: {
@@ -64,16 +79,28 @@ export default {
     },
     //获取用户歌单
     async getPlaylist() {
-      this.current = 2;
+      if (!localStorage.getItem("uid")) {
+        this.likedSongsId = 0;
+        this.playlist = [];
+        return;
+      }
       await this.$http
-        .post(`/user/playlist?uid=${localStorage.getItem("uid")}`, {
-          cookie: localStorage.getItem("cookie"),
-        })
+        .post(`/user/playlist?uid=${localStorage.getItem("uid")}`)
         .then((res) => {
           this.likedSongsId = res.data.playlist[0].id;
           this.playlist = res.data.playlist.splice(1);
-        });
+        })
+        .catch();
     },
+    //获取用户喜欢的音乐列表
+    // async getLikeList() {
+    //   await this.$http
+    //     .post(`/likelist?uid=${localStorage.getItem("uid")}`)
+    //     .then((res) => {
+    //       console.log(res.data);
+    //     })
+    //     .catch();
+    // },
   },
 };
 </script>
@@ -98,6 +125,8 @@ export default {
     width: 100%;
     line-height: 0.55rem;
   }
+
+  .box:hover,
   .active {
     background-color: #f6f6f7;
     font-weight: bold;
@@ -123,6 +152,7 @@ export default {
       text-overflow: ellipsis;
       white-space: nowrap;
     }
+    .item:hover,
     .active {
       background-color: #f6f6f7;
     }

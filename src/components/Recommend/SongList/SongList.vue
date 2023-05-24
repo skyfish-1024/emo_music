@@ -1,12 +1,14 @@
 <template>
   <div class="songList">
     <div class="highQuality">
-      <img :src="song.coverImgUrl" alt="" />
+      <img :src="song.coverImgUrl" alt="" class="bg" />
+      <img :src="song.coverImgUrl" alt="" class="cover" />
       <div class="right">
         <div class="tag">精品歌单</div>
         <div class="name">{{ song.name }}</div>
       </div>
     </div>
+
     <div class="cat">
       <div class="left" @click="showAllCat">{{ currentTagName }} ></div>
       <div class="right">
@@ -55,27 +57,30 @@
         <SongBox :song="item"></SongBox>
       </div>
     </div>
-    <el-pagination
-      background
-      layout="prev, pager, next"
+    <el-empty v-if="total == 0" :image-size="100"></el-empty>
+    <Pagination
       :total="total"
       :page-size="pageSize"
-      @current-change="pageChange"
-    >
-    </el-pagination>
+      @currentChange="pageChange"
+    ></Pagination>
   </div>
 </template>
 
 <script>
 import SongBox from "./SongBox";
-import Loading from "@/components/Loading.vue";
+import Loading from "@/components/common/Loading.vue";
+import Pagination from "@/components/common/Pagination.vue";
 export default {
-  components: { SongBox, Loading },
+  components: { SongBox, Loading, Pagination },
   data() {
     return {
       isLoading: false,
       isShowAllCat: false,
-      song: { coverImgUrl: "", name: "" },
+      song: {
+        coverImgUrl:
+          "https://scpic.chinaz.net/files/pic/pic9/201312/apic2754.jpg",
+        name: "",
+      },
       categories: [],
       catList: [],
       hotTags: [],
@@ -109,14 +114,10 @@ export default {
       });
     },
     async getCatList() {
-      await this.$http
-        .get(`/playlist/catlist`, {
-          cookie: localStorage.getItem("cookie"),
-        })
-        .then((res) => {
-          this.categories = res.data.categories;
-          this.catList = res.data.sub;
-        });
+      await this.$http.get(`/playlist/catlist`).then((res) => {
+        this.categories = res.data.categories;
+        this.catList = res.data.sub;
+      });
     },
     async getPlaylist() {
       this.isShowAllCat = false;
@@ -124,10 +125,7 @@ export default {
       this.getHighQuality();
       await this.$http
         .get(
-          `/top/playlist?offset=${this.pageNum}&cat=${this.currentTagName}&limit=${this.pageSize}`,
-          {
-            cookie: localStorage.getItem("cookie"),
-          }
+          `/top/playlist?offset=${this.pageNum}&cat=${this.currentTagName}&limit=${this.pageSize}`
         )
         .then((res) => {
           this.playlist = res.data.playlists;
@@ -140,9 +138,7 @@ export default {
     },
     async getHighQuality() {
       await this.$http
-        .get(`/top/playlist/highquality?cat=${this.currentTagName}&limit=2`, {
-          cookie: localStorage.getItem("cookie"),
-        })
+        .get(`/top/playlist/highquality?cat=${this.currentTagName}&limit=2`)
         .then((res) => {
           this.song = res.data.playlists[0];
         })
@@ -156,20 +152,25 @@ export default {
   },
 };
 </script>
-<style lang="scss">
+<style lang="scss" scoped>
 .songList {
   padding: 0 0.5rem;
   position: relative;
 }
+
 .highQuality {
+  position: relative;
+  z-index: 12;
+  overflow: hidden;
+  z-index: 12;
   width: 100%;
   height: 2.58rem;
   box-sizing: border-box;
   padding: 0.23rem;
-  background: linear-gradient(to right, #8f9ea5, #b9c3cd 70%);
   border-radius: 0.2rem;
   font-size: 0.28rem;
   display: flex;
+
   .right {
     display: flex;
     // justify-content: center;
@@ -180,7 +181,8 @@ export default {
       color: #cca369;
       font-size: 0.2rem;
       height: 0.45rem;
-      line-height: 0.41rem;
+      display: flex;
+      align-items: center;
       box-sizing: border-box;
       padding: 0 0.2rem;
       width: fit-content;
@@ -194,7 +196,23 @@ export default {
     }
   }
 }
-.highQuality > img {
+.bg {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 2.58rem;
+  box-sizing: border-box;
+  padding: 0.23rem;
+  border-radius: 0.2rem;
+  // backdrop-filter: blur(15px);
+  filter: blur(30px);
+  background: rgba(255, 255, 255, 0.5);
+  // backdrop-filter: blur(50px);
+}
+.cover {
   height: 2.12rem;
   width: 2.12rem;
 }
@@ -300,15 +318,6 @@ export default {
     margin-bottom: 0.1rem;
     display: flex;
     justify-content: center;
-  }
-}
-.el-pagination {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 1rem;
-  margin-top: 0.3rem;
-  .active {
-    background-color: #ec4141 !important;
   }
 }
 </style>

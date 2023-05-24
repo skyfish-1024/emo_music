@@ -7,7 +7,7 @@
       <div class="aside">
         <MyAside></MyAside>
       </div>
-      <div class="main">
+      <div class="main" id="main">
         <router-view :key="$route.fullPath" />
       </div>
     </div>
@@ -25,7 +25,7 @@ export default {
 };
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 .home {
   min-width: 15.34rem;
   min-height: 10.04rem;

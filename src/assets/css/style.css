@@ -6,13 +6,4 @@ html,body{
     height: 100%;
     background-color: lightblue;
 }
-.el-pagination {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 1rem;
-
-  }
-
-  .el-pagination .active {
-    background-color: #ec4141 !important;
-  }
+  

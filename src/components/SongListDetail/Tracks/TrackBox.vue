@@ -1,6 +1,14 @@
 <template>
   <div class="trackBox" :class="index % 2 == 1 ? 'active' : ''">
-    <div class="order">{{ order }}</div>
+    <div class="order">
+      <img
+        v-if="song.id == id"
+        src="@/assets/static/icon/laba.png"
+        style="height: 100%; width: 100%"
+        alt=""
+      />
+      <div v-else>{{ order }}</div>
+    </div>
     <div class="options">
       <div v-if="index == 0">操作</div>
       <div v-else>
@@ -58,6 +66,9 @@ export default {
       }
       return minute + ":" + second;
     },
+    id() {
+      return this.$store.getters.getPlaySongId || 0;
+    },
   },
 };
 </script>
@@ -80,7 +91,12 @@ export default {
   background-color: #fafafa;
 }
 .order {
+  text-align: center;
   width: 0.4rem;
+  img {
+    height: 100%;
+    width: 100%;
+  }
 }
 .options {
   width: 0.85rem;
@@ -95,19 +111,21 @@ export default {
   }
 }
 .name {
-  width: 4.5rem;
+  width: 4.1rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .artists {
-  width: 2.1rem;
+  width: 2rem;
+  margin-right: 0.2rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .albumName {
   width: 2.85rem;
+  margin-right: 0.2rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

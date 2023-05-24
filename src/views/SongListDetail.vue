@@ -1,7 +1,7 @@
 <template>
   <div class="songListDetail">
     <div class="top">
-      <Detail :playlist="playlist"></Detail>
+      <Detail :playlist.sync="playlist"></Detail>
     </div>
 
     <div class="nav">
@@ -36,7 +36,9 @@
     <div v-if="currentIndex == 2" class="content">
       <Comment :id="this.id"></Comment>
     </div>
-    <div v-if="currentIndex == 3" class="content"></div>
+    <div v-if="currentIndex == 3" class="content">
+      <Collector :id="this.id"></Collector>
+    </div>
   </div>
 </template>
   
@@ -44,8 +46,9 @@
 import Detail from "@/components/SongListDetail/Detail.vue";
 import Tracks from "@/components/SongListDetail/Tracks/Tracks.vue";
 import Comment from "@/components/SongListDetail/Comment/Comment.vue";
+import Collector from "@/components/SongListDetail/Collector/Collector.vue";
 export default {
-  components: { Detail, Tracks, Comment },
+  components: { Detail, Tracks, Comment, Collector },
   data() {
     return {
       currentIndex: 1,
@@ -65,31 +68,40 @@ export default {
     navOnClick(index) {
       this.currentIndex = index;
     },
-    async getPlayList() {
-      await this.$http
-        .post(`/playlist/detail?id=${this.id}`, {
-          cookie: localStorage.getItem("cookie"),
-        })
-        .then((res) => {
-          this.playlist = res.data.playlist;
-          // console.log(res.data);
-        });
-    },
+
+    //获取歌单id
     async getId() {
-      if (!this.$route.query.id) {
-        await this.$http
-          .post(`/user/playlist?uid=${localStorage.getItem("uid")}`, {
-            cookie: localStorage.getItem("cookie"),
-          })
-          .then((res) => {
-            console.log(res.data);
-            console.log(localStorage.getItem("uid"));
-            // this.playlist = res.data.playlist[0];
-            this.id = res.data.playlist[0].id;
+      if (this.$route.query.id == "0") {
+        if (!localStorage.getItem("uid")) {
+          this.$message({
+            message: "请先登录",
+            type: "error",
           });
+          this.currentIndex = 1;
+          this.$router.push("/recommend");
+          return;
+        }
+        await this.$http
+          .post(`/user/playlist?uid=${localStorage.getItem("uid")}`)
+          .then((res) => {
+            this.id = Number(res.data.playlist[0].id);
+          })
+          .catch();
         return;
       }
       this.id = Number(this.$route.query.id);
+    },
+    //获取音乐列表
+    async getPlayList() {
+      if (this.id == 0) {
+        return;
+      }
+      await this.$http
+        .post(`/playlist/detail?id=${this.id}`)
+        .then((res) => {
+          this.playlist = res.data.playlist;
+        })
+        .catch();
     },
   },
 };
@@ -139,5 +151,22 @@ export default {
 .content {
   width: 100%;
   overflow: hidden;
+}
+.songListDetail::-webkit-scrollbar {
+  // display: none;
+  width: 0.1rem;
+  border-radius: 0.5rem;
+}
+
+.songListDetail::-webkit-scrollbar-thumb {
+  border-radius: 0.5rem;
+  background-color: #adadaba4;
+}
+.songListDetail::-webkit-scrollbar-track {
+  border-radius: 0.5rem;
+  background-color: #fff;
+}
+.songListDetail::-webkit-scrollbar-button {
+  display: none;
 }
 </style>

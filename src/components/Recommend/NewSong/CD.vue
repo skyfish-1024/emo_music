@@ -2,7 +2,7 @@
   <div class="cd">
     <div class="box">
       <div class="pic" :style="`backgroundImage:url(${CD.blurPicUrl});`">
-        <img src="@/assets/static/icon/play_red.png" alt="" />
+        <img src="@/assets/static/icon/play_red.png" alt="" v-lazy="'img'" />
       </div>
     </div>
 

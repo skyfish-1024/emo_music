@@ -5,20 +5,19 @@
       :key="item.commentId"
       :comment="item"
     ></CommentBox>
-    <el-pagination
-      background
-      layout="prev, pager, next"
+    <el-empty v-if="total == 0" :image-size="100"></el-empty>
+    <Pagination
       :total="total"
       :page-size="pageSize"
-      @current-change="pageChange"
-    >
-    </el-pagination>
+      @currentChange="pageChange"
+    ></Pagination>
   </div>
 </template>
 <script>
 import CommentBox from "./CommentBox.vue";
+import Pagination from "@/components/common/Pagination.vue";
 export default {
-  components: { CommentBox },
+  components: { CommentBox, Pagination },
   props: {
     id: {
       type: Number,
@@ -40,19 +39,14 @@ export default {
     async getComments() {
       await this.$http
         .get(
-          `/comment/playlist?id=${this.id}&limit=${this.pageSize}&offset=${this.pageNum}`,
-          {
-            cookie: localStorage.getItem("cookie"),
-          }
+          `/comment/playlist?id=${this.id}&limit=${this.pageSize}&offset=${this.pageNum}`
         )
         .then((res) => {
-          console.log(res.data);
           this.total = res.data.total;
           this.comments = res.data.comments;
         });
     },
     pageChange(e) {
-      console.log(e);
       this.pageNum = e - 1;
       this.getComments();
     },
@@ -60,17 +54,8 @@ export default {
 };
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 .comment {
   overflow: auto;
-}
-.el-pagination {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 1rem;
-  margin-top: 0.3rem;
-  .active {
-    background-color: #ec4141 !important;
-  }
 }
 </style>

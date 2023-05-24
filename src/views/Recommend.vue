@@ -58,18 +58,19 @@ export default {
 </script>
 <style lang="scss" scoped>
 .recommend {
+  width: 100%;
   background-color: white;
   height: 8.06rem;
   overflow: auto;
 }
 .nav {
+  // width: 100%;
   display: flex;
-  padding: 0.2rem 0;
   position: sticky;
   background-color: white;
   z-index: 100;
   top: 0;
-  margin: 0 0.5rem;
+  padding: 0.2rem 0.5rem;
   .box {
     cursor: pointer;
     margin-right: 0.3rem;
@@ -96,6 +97,9 @@ export default {
     .line {
       background-color: #ec4141;
     }
+  }
+  .content {
+    width: 100%;
   }
 }
 </style>

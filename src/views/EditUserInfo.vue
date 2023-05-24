@@ -109,7 +109,7 @@
             >
               保存
             </div>
-            <div class="btn white">取消</div>
+            <div class="btn white" @click="cancel">取消</div>
           </div>
         </div>
       </div>
@@ -132,14 +132,17 @@
   </div>
 </template>
 <script>
+import { Loading } from "element-ui";
 export default {
   data() {
     var checkNickname = async (rule, value, callback) => {
       if (!value) {
         return callback(new Error("请输入昵称"));
       }
+      if (value == JSON.parse(this.originUserInfo).nickname) {
+        return callback();
+      }
       var pattern = /^[A-Za-z0-9_-]+$/;
-
       if (value.length < 4 || value.length > 30 || !pattern.test(value)) {
         return callback(
           new Error("昵称为4-30个字，且不包含除-和_以外的特殊字符")
@@ -157,9 +160,7 @@ export default {
       year: new Date().getFullYear(),
       month: new Date().getMonth() + 1,
       day: new Date().getDate(),
-      uploadUrl: `http://localhost:4000/avatar/upload?uid=${localStorage.getItem(
-        "uid"
-      )}`,
+      uploadUrl: `http://localhost:4000/avatar/upload?imgX=0&imgY=0`,
       cookie: localStorage.getItem("cookie"),
       avatarUrl: "",
       userInfo: {
@@ -171,7 +172,7 @@ export default {
         city: 100,
         province: 0,
       },
-      originUserInfo: {},
+      originUserInfo: "",
       areaList: [],
       fileList: [],
       rules: {
@@ -229,33 +230,28 @@ export default {
     },
     //判断用户信息是否发生改变
     isChanged() {
-      if (
-        JSON.stringify(this.userInfo) == JSON.stringify(this.originUserInfo)
-      ) {
-        return false;
-      }
-      return true;
+      return !(JSON.stringify(this.userInfo) == this.originUserInfo);
     },
   },
   watch: {
     year() {
       this.userInfo.birthday = new Date(
         this.year,
-        this.month,
+        this.month - 1,
         this.day
       ).valueOf();
     },
     month() {
       this.userInfo.birthday = new Date(
         this.year,
-        this.month,
+        this.month - 1,
         this.day
       ).valueOf();
     },
     day() {
       this.userInfo.birthday = new Date(
         this.year,
-        this.month,
+        this.month - 1,
         this.day
       ).valueOf();
     },
@@ -265,66 +261,76 @@ export default {
     await this.getUserInfo();
   },
   methods: {
-    uploadAvatar(v) {
-      console.log(v);
-      let data = new FormData();
-      data.append("imgFile", v.file);
-      // console.log(data.get("imgFile"));
-      let imgFile = {
-        name: v.file.name,
-        data: v.file,
-      };
-      this.$http
-        .post(v.action, {
+    //获取图片大小
+    async getImgSize(file) {
+      return new Promise((resolve, reject) => {
+        let reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = function (theFile) {
+          let image = new Image();
+          image.src = theFile.target.result;
+          image.onload = function () {
+            resolve({
+              width: this.width,
+              height: this.height,
+            });
+          };
+        };
+      });
+    },
+    //更新头像
+    async uploadAvatar(f) {
+      let load = Loading.service({ text: "头像更新中", target: ".edit" });
+      let file = f.file;
+      delete file.uid;
+      const imgSize = await this.getImgSize(file);
+      let param = new FormData();
+      param.append("imgFile", file);
+      await this.$http
+        .post(`/avatar/upload?imgX=0&imgY=0&imgSize=${imgSize.width}`, param, {
           headers: { "Content-Type": "multipart/form-data" },
-          imgSize: 300, //图片尺寸,需要正方形图片
-          cookie: localStorage.getItem("cookie"),
-          imgFile,
         })
         .then((res) => {
-          console.log(res.data);
+          // console.log(res.data);
+          load.close();
           if (res.data.code == 200) {
+            this.$store.commit("setInfoChangeTime", Date.now().valueOf());
             this.$message({
               message: "修改成功",
               type: "success",
             });
+            this.avatarUrl = res.data.data.url;
           } else {
             this.$message({
               message: "修改失败",
               type: "error",
             });
           }
-
-          // this.avatarUrl = res.data.data.url;
+        })
+        .catch((err) => {
+          load.close();
+          this.$message({
+            message: "修改失败",
+            type: "error",
+          });
         });
     },
 
-    async checkNickname() {
-      await this.$http
-        .get(`/nickname/check?nickname=?timestamp=${Date.now()}`)
-        .then((res) => {
-          console.log(res.data);
-        });
-    },
     //更新用户信息
     async updateUserInfo() {
       if (!this.isChanged) {
         return;
       }
+      let load = Loading.service({ text: "信息更新中", target: ".edit" });
       await this.$http
-        .post(
-          `/user/update?uid=${localStorage.getItem(
-            "uid"
-          )}?timestamp=${Date.now()}`,
-          {
-            cookie: localStorage.getItem("cookie"),
-            headers: { "content-type": "application/x-www-form-urlencoded" },
-            ...this.userInfo,
-          }
-        )
+        .get(`/user/update?uid=${localStorage.getItem("uid")}`, {
+          params: this.userInfo,
+        })
         .then((res) => {
           // console.log(res.data);
+          load.close();
           if (res.data.code == 200) {
+            this.$store.commit("setInfoChangeTime", Date.now().valueOf());
             this.$message({
               message: "修改成功",
               type: "success",
@@ -340,36 +346,38 @@ export default {
           console.log(err);
         });
     },
+    cancel() {
+      this.userInfo = JSON.parse(this.originUserInfo);
+    },
+    //获取用户信息
     async getUserInfo() {
       await this.$http
-        .get(
-          `/user/detail?uid=${localStorage.getItem(
-            "uid"
-          )}?timestamp=${Date.now()}`,
-          {
-            cookie: localStorage.getItem("cookie"),
-          }
-        )
+        .get(`/user/detail?uid=${localStorage.getItem("uid")}`)
         .then((res) => {
           let profile = res.data.profile;
           this.avatarUrl = profile.avatarUrl;
-          this.userInfo.nickname = profile.nickname;
-          this.userInfo.gender = profile.gender;
-          this.userInfo.birthday = profile.birthday;
-          this.userInfo.city = profile.city;
-          this.userInfo.province = profile.province;
-          this.userInfo.signature = profile.signature;
-          this.originUserInfo = JSON.parse(JSON.stringify(this.userInfo));
-          // console.log(new Date(-profile.birthday));
+          // this.userInfo.nickname = profile.nickname;
+          // this.userInfo.gender = profile.gender;
+          // this.userInfo.birthday = profile.birthday;
+          // this.userInfo.city = profile.city;
+          // this.userInfo.province = profile.province;
+          // this.userInfo.signature = profile.signature;
+          this.userInfo = profile;
+          if (profile.birthday > 0) {
+            let birthday = new Date(profile.birthday);
+            this.year = birthday.getFullYear();
+            this.month = birthday.getMonth() + 1;
+            this.day = birthday.getDate();
+          }
+          this.originUserInfo = JSON.stringify(this.userInfo);
         });
     },
+    //获取城市列表
     async getAreaList() {
       await this.$http
-        .get(`/countries/code/list`, {
-          cookie: localStorage.getItem("cookie"),
-        })
+        .get(`/countries/code/list`)
         .then((res) => {
-          // console.log(res.data);
+          console.log(res.data);
           //   console.log(localStorage.getItem("uid"));
           // this.playlist = res.data.playlist[0];
           //   this.id = res.data.playlist[0].id;
@@ -391,6 +399,7 @@ export default {
   }
   .box {
     display: flex;
+    width: 100%;
     .left {
       min-width: 7rem;
       overflow: hidden;
@@ -401,7 +410,7 @@ export default {
         line-height: 0.45rem;
         color: #333333;
         display: flex;
-        align-items: center;
+        // align-items: center;
         margin: 0.15rem 0;
         .label {
           min-width: 0.7rem;
@@ -476,9 +485,9 @@ export default {
 }
 
 .el-textarea {
-  height: 1.13rem;
+  min-height: 1.13rem;
   textarea {
-    height: 1.13rem !important;
+    min-height: 1.13rem !important;
   }
 }
 .el-select {
@@ -492,6 +501,11 @@ export default {
   .el-input__icon {
     line-height: 0.4rem;
   }
+}
+.el-select-dropdown__item,
+.el-select-dropdown__empty {
+  font-size: 0.2rem;
+  text-align: center;
 }
 .el-form,
 .el-form-item {

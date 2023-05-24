@@ -1,7 +1,11 @@
 <template>
   <div class="newSongBox" :class="index % 2 == 1 ? 'active' : ''">
     <div class="order">{{ order }}</div>
-    <div class="pic" :style="`backgroundImage:url(${song.album.blurPicUrl});`">
+    <div
+      class="pic"
+      :style="`backgroundImage:url(${song.album.blurPicUrl});`"
+      v-lazy="'bg'"
+    >
       <img src="@/assets/static/icon/play_red.png" alt="" />
     </div>
     <div class="name">{{ song.name || "" }}</div>

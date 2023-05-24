@@ -11,15 +11,16 @@
       :key="index"
       :song="item"
       :index="index + 1"
-      @click.native="play()"
+      @click.native="play(index)"
     ></TrackBox>
     <Loading v-if="isLoading"></Loading>
+    <el-empty v-if="total == 0" :image-size="100"></el-empty>
   </div>
 </template>
   
   <script>
 import TrackBox from "./TrackBox.vue";
-import Loading from "@/components/Loading.vue";
+import Loading from "@/components/common/Loading.vue";
 export default {
   components: { TrackBox, Loading },
   props: {
@@ -46,33 +47,34 @@ export default {
     await this.getTracks();
   },
   methods: {
-    play() {
-      this.$store.commit("setPlaylistId", this.id);
+    //点击播放单曲
+    play(index) {
+      this.$store.commit("setPlayListId", this.id);
+      this.$store.commit("setPlayIndex", index);
     },
+    //获取音乐列表
     async getTracks() {
       if (this.id == 0) {
+        if (!localStorage.getItem("uid")) {
+          this.id = 0;
+          return;
+        }
         await this.$http
-          .post(`/user/playlist?uid=${localStorage.getItem("uid")}`, {
-            cookie: localStorage.getItem("cookie"),
-          })
+          .post(`/user/playlist?uid=${localStorage.getItem("uid")}`)
           .then((res) => {
-            // console.log(res.data);
-            // console.log(localStorage.getItem("uid"));
-            // this.playlist = res.data.playlist[0];
-            this.id = res.data.playlist[0].id;
+            this.id = Number(res.data.playlist[0].id);
           });
       }
       await this.$http
         .post(
-          `/playlist/track/all?id=${this.id}&limit=${this.pageSize}&offset=${this.pageNum}`,
-          {
-            cookie: localStorage.getItem("cookie"),
-          }
+          `/playlist/track/all?id=${this.id}&limit=${this.pageSize}&offset=${this.pageNum}`
         )
         .then((res) => {
           this.tracks = res.data.songs;
+          // console.log(res.data);
         });
     },
+    //加载更多
     async loadMore() {
       if (this.isLoading) {
         return;
@@ -85,10 +87,7 @@ export default {
       this.pageNum++;
       await this.$http
         .post(
-          `/playlist/track/all?id=${this.id}&limit=${this.pageSize}&offset=${this.pageNum}`,
-          {
-            cookie: localStorage.getItem("cookie"),
-          }
+          `/playlist/track/all?id=${this.id}&limit=${this.pageSize}&offset=${this.pageNum}`
         )
         .then((res) => {
           this.tracks = [...this.tracks, ...res.data.songs];
@@ -102,7 +101,7 @@ export default {
 };
 </script>
   
-  <style lang="scss" scoped>
+  <style  lang="scss" scoped>
 .songList {
   height: 4rem;
 }

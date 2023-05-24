@@ -46,6 +46,7 @@
             </div>
             <div class="tip1">扫码登录</div>
             <img
+              class="confirm"
               v-if="onConfirm"
               src="@/assets/static/img/onConfirm.png"
               alt=""
@@ -118,7 +119,7 @@ export default {
       profile: {
         nickname: "登录",
         avatarUrl:
-          "http://qiniu.zzyozzy.top/724797F646BB87F2868A3DF772E26957.jpg.jpg",
+          "https://scpic.chinaz.net/files/pic/pic9/201312/apic2754.jpg",
       },
       isShowUser: false,
       isLogin: false,
@@ -130,21 +131,37 @@ export default {
       queryId: 0,
     };
   },
+  computed: {
+    infoChange() {
+      return this.$store.getters.getInfoChangeTime;
+    },
+  },
+  watch: {
+    infoChange: {
+      async handler(newVal, oldVal) {
+        await this.getProfile();
+      },
+    },
+  },
   async created() {
     await this.getUid();
     await this.getProfile();
   },
   methods: {
+    //跳转信息编辑页
     toEdit() {
       this.isShowUser = false;
       this.$router.push("/edit");
     },
+    //回退
     back() {
       this.$router.back();
     },
+    //前进
     go() {
       this.$router.go();
     },
+    //登录
     async login() {
       this.isShowUser = !this.isShowUser;
       if (this.uid) {
@@ -155,12 +172,20 @@ export default {
       await this.getQRimg();
       this.queryId = setTimeout(this.getQRcheck, 1000);
     },
+    //退出登录
     async logout() {
       localStorage.clear();
       this.isLogin = false;
       this.uid = "";
-      this.login();
+      this.profile = {
+        nickname: "登录",
+        avatarUrl:
+          "https://scpic.chinaz.net/files/pic/pic9/201312/apic2754.jpg",
+      };
+      this.$store.commit("setSubscribeTime", Date.now().valueOf());
+      this.$router.push("/recommend");
     },
+    //关闭用户信息页
     cancel() {
       this.isShowUser = false;
       this.onConfirm = false;
@@ -172,6 +197,7 @@ export default {
         `/login/qr/key?timestamp=${Date.now()}`
       );
       if (res.code != 200) {
+        return;
       }
       this.QRkey = res.data.unikey;
     },
@@ -181,24 +207,26 @@ export default {
         `/login/qr/create?qrimg=qrimg&key=${this.QRkey}&timestamp=${Date.now()}`
       );
       if (res.code != 200) {
+        return;
       }
       this.QRimg = res.data.qrimg;
     },
     //查询二维码状态
     async getQRcheck() {
       clearTimeout(this.queryId);
-      this.$http
+      await this.$http
         .get(`/login/qr/check?key=${this.QRkey}&timestamp=${Date.now()}`)
-        .then((res) => {
+        .then(async (res) => {
           if (res.data.code == 803) {
-            console.log("803", res.data);
             localStorage.setItem("cookie", res.data.cookie);
             document.cookie = res.data.cookie;
             this.isShowUser = false;
             this.onConfirm = false;
             this.isLogin = true;
-            this.getUid();
-            this.getProfile();
+            await this.getUid();
+            await this.getProfile();
+            this.$store.commit("setSubscribeTime", Date.now().valueOf());
+            this.$router.push("/recommend");
             return;
           }
           if (res.data.code == 802) {
@@ -226,14 +254,10 @@ export default {
       if (!localStorage.getItem("cookie")) {
         return;
       }
-      await this.$http
-        .post(`/login/status?timestamp=${Date.now()}`, {
-          cookie: localStorage.getItem("cookie"),
-        })
-        .then((res) => {
-          this.uid = res.data.data.account.id;
-          localStorage.setItem("uid", res.data.data.account.id);
-        });
+      await this.$http.post(`/login/status`).then((res) => {
+        this.uid = res.data.data.account.id;
+        localStorage.setItem("uid", res.data.data.account.id);
+      });
     },
     //获取账户信息
     async getProfile() {
@@ -278,6 +302,7 @@ img,
 }
 .logo {
   width: 2.77rem;
+  font-size: 0.4rem;
   height: 100%;
   color: #ffffff;
   display: flex;
@@ -299,15 +324,31 @@ img,
 }
 .search {
   width: 2.4rem;
-  height: 100%;
+  height: 100% !important;
   display: flex;
   align-items: center;
   border-radius: 0.2rem;
   overflow: hidden;
 }
-.el-input__inner {
-  height: 100%;
-  width: 100%;
+::v-deep .search .el-input__inner {
+  height: 100% !important;
+  font-size: 0.2rem;
+  padding: 0 0.1rem;
+  padding-left: 0.4rem;
+  border: 0;
+  outline: 0;
+}
+::v-deep .search .el-input__inner:focus {
+  border: none;
+  outline: 0;
+}
+::v-deep .search i {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100% !important;
+  max-width: 0.2rem;
+  font-size: 0.2rem;
 }
 .right {
   position: relative;
@@ -328,6 +369,7 @@ img,
 }
 .vip {
   height: 0.2rem;
+  line-height: 0.2rem;
   width: 0.68rem;
   box-sizing: border-box;
   padding: 0.04rem;
@@ -357,6 +399,7 @@ img,
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   background-color: #fff;
   top: 0.8rem;
   overflow: hidden;
@@ -366,6 +409,15 @@ img,
     height: 2.6rem;
     width: 2.6rem;
   }
+  .confirm {
+    height: 2.6rem;
+    // width: 2.6rem;
+  }
+}
+.login {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 .cancel {
   width: 0.3rem;

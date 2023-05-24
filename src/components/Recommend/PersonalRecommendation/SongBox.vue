@@ -1,6 +1,10 @@
 <template>
   <div class="box" @click="toDetail">
-    <div class="pic" :style="`backgroundImage: url(${song.picUrl});`">
+    <div
+      class="pic"
+      :style="`backgroundImage: url(${song.picUrl});`"
+      v-lazy="'bg'"
+    >
       <div class="playCount">
         <img src="@/assets/static/icon/play.png" alt="" />
         {{ Math.floor(Number(song.playCount) / 10000) }}万
@@ -90,5 +94,10 @@ export default {
   color: #333333;
   line-height: 0.26rem;
   margin-top: 0.15rem;
+  overflow: hidden;
+  display: -webkit-box;
+  text-overflow: ellipsis;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 </style>

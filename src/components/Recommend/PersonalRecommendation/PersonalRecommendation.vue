@@ -29,22 +29,14 @@ export default {
   },
   methods: {
     async getBanners() {
-      await this.$http
-        .get(`/banner`, {
-          cookie: localStorage.getItem("cookie"),
-        })
-        .then((res) => {
-          this.banners = res.data.banners;
-        });
+      await this.$http.get(`/banner`).then((res) => {
+        this.banners = res.data.banners;
+      });
     },
     async getPersonalized() {
-      await this.$http
-        .get(`/personalized?limit=10`, {
-          cookie: localStorage.getItem("cookie"),
-        })
-        .then((res) => {
-          this.personalized = res.data.result;
-        });
+      await this.$http.get(`/personalized?limit=10`).then((res) => {
+        this.personalized = res.data.result;
+      });
     },
   },
 };

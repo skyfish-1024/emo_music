@@ -75,6 +75,7 @@
             <CD :CD="item"></CD>
           </div>
         </div>
+        <el-empty v-if="!CDs.length && !isLoading" :image-size="100"></el-empty>
       </div>
     </div>
   </div>
@@ -82,7 +83,7 @@
 
 <script>
 import NewSongBox from "./NewSongBox.vue";
-import Loading from "@/components/Loading.vue";
+import Loading from "@/components/common/Loading.vue";
 import CD from "./CD.vue";
 export default {
   components: { NewSongBox, CD, Loading },
@@ -190,10 +191,7 @@ export default {
         .get(
           `/top/album?offset=1&limit=30&area=${
             this.area[this.currentArea].type
-          }&year=${Number(this.year)}&month=${Number(this.month)}`,
-          {
-            cookie: localStorage.getItem("cookie"),
-          }
+          }&year=${Number(this.year)}&month=${Number(this.month)}`
         )
         .then((res) => {
           console.log(res.data);

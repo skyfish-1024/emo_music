@@ -44,18 +44,18 @@
 }
 
 .loading {
-  width: 32px;
-  height: 32px;
+  width: 0.32rem;
+  height: 0.32rem;
 }
 
 .loading > div {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 8px;
-  height: 8px;
-  margin-top: -4px;
-  margin-left: -4px;
+  width: 0.08rem;
+  height: 0.08rem;
+  margin-top: -0.04rem;
+  margin-left: -0.04rem;
   border-radius: 100%;
   animation: ball-spin-clockwise 1s infinite ease-in-out;
 }
@@ -109,39 +109,39 @@
 }
 
 .loading.la-sm {
-  width: 16px;
-  height: 16px;
+  width: 0.16rem;
+  height: 0.16rem;
 }
 
 .loading.la-sm > div {
-  width: 4px;
-  height: 4px;
-  margin-top: -2px;
-  margin-left: -2px;
+  width: 0.04rem;
+  height: 0.04rem;
+  margin-top: -0.02rem;
+  margin-left: -0.02rem;
 }
 
 .loading.la-2x {
-  width: 64px;
-  height: 64px;
+  width: 0.64rem;
+  height: 0.64rem;
 }
 
 .loading.la-2x > div {
-  width: 16px;
-  height: 16px;
-  margin-top: -8px;
-  margin-left: -8px;
+  width: 0.16rem;
+  height: 0.16rem;
+  margin-top: -0.08rem;
+  margin-left: -0.08rem;
 }
 
 .loading.la-3x {
-  width: 96px;
-  height: 96px;
+  width: 0.96rem;
+  height: 0.96rem;
 }
 
 .loading.la-3x > div {
-  width: 24px;
-  height: 24px;
-  margin-top: -12px;
-  margin-left: -12px;
+  width: 0.24rem;
+  height: 0.24rem;
+  margin-top: -0.12rem;
+  margin-left: -0.12rem;
 }
 
 @keyframes ball-spin-clockwise {

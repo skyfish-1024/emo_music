@@ -5,7 +5,7 @@
         <img :src="song.pic" alt="" />
       </div>
       <div class="box">
-        <div>
+        <div class="nameBox">
           <div class="name">
             {{ song.name }}
           </div>
@@ -83,12 +83,12 @@ export default {
       playlist: [],
       song: {
         name: "",
-        pic: "",
+        pic: "https://scpic.chinaz.net/files/pic/pic9/201312/apic2754.jpg",
         artist: "",
         isLiked: false,
       },
       songUrl: "",
-      currentIndex: 0,
+      // currentIndex: 0,
       time: 0,
       currentTime: 0,
       paused: true,
@@ -99,6 +99,9 @@ export default {
   computed: {
     playlistId() {
       return this.$store.getters.getPlaylistId;
+    },
+    currentIndex() {
+      return this.$store.getters.getPlayIndex;
     },
     current() {
       let current = Math.ceil(this.currentTime);
@@ -132,87 +135,127 @@ export default {
         await this.getSong();
       },
     },
+    currentIndex: {
+      async handler(newVal, oldVal) {
+        await this.playClick();
+      },
+    },
   },
 
   methods: {
+    //获取播放列表
     async getPlaylist() {
       if (this.playlistId == 0) {
         return;
       }
       await this.$http
-        .post(`/playlist/track/all?id=${this.playlistId}&limit=10&offset=1`, {
-          cookie: localStorage.getItem("cookie"),
-        })
-        .then((res) => {
+        .post(`/playlist/track/all?id=${this.playlistId}`)
+        .then(async (res) => {
           this.playlist = res.data.songs;
-          this.currentIndex = 0;
-          this.getSongUrl();
+          // this.currentIndex = 0;
+          this.$store.commit("setPlayIndex", this.currentIndex);
+          await this.getSongUrl();
         });
     },
+    //获取播放地址
     async getSongUrl() {
+      this.percentage = 0;
+      this.currentTime = 0;
+      let paused = this.paused;
       if (this.playlist.length == 0) {
         return;
       }
+
       await this.$http
-        .post(`/song/url?id=${this.playlist[this.currentIndex].id}`, {
-          cookie: localStorage.getItem("cookie"),
-        })
+        .post(`/song/url?id=${this.playlist[this.currentIndex].id}`)
         .then((res) => {
           this.songUrl = res.data.data[0].url;
           this.time = res.data.data[0].time;
         });
-      if (!this.paused) {
+      if (!paused) {
+        this.paused = !paused;
         this.play();
       }
     },
+    //获取歌曲信息
     async getSong() {
       if (this.playlist.length == 0) {
         return;
       }
+
       await this.$http
-        .post(`/song/detail?ids=${this.playlist[this.currentIndex].id}`, {
-          cookie: localStorage.getItem("cookie"),
-        })
+        .post(`/song/detail?ids=${this.playlist[this.currentIndex].id}`)
         .then((res) => {
           this.song.pic = res.data.songs[0].al.picUrl;
           this.song.name = res.data.songs[0].name;
           this.song.artist = res.data.songs[0].al.name;
           // this.song.isLiked = res.data.songs[0].al.picUrl;
+          this.$store.commit("setPlaySongId", res.data.songs[0].id);
         });
     },
+    //播放/暂停
     play() {
       let music = document.querySelector("#music");
-      this.paused = !music.paused;
-      if (music.paused) {
-        music.play();
-        this.timer = setInterval(this.getPercentage, 100);
+      music.pause();
+      if (!this.songUrl) {
+        return;
+      }
+      if (this.paused) {
+        music
+          .play()
+          .then((res) => {
+            this.getPercentage();
+          })
+          .catch((err) => err);
       } else {
         clearInterval(this.timer);
         music.pause();
       }
+      this.paused = !this.paused;
     },
-    getPercentage() {
+    //获取当前播放进度
+    async getPercentage() {
       let music = document.querySelector("#music");
       this.currentTime = music.currentTime;
-      this.percentage = ((music.currentTime * 1000) / this.time) * 100;
-      if (this.percentage >= 99) {
-        this.next();
+      let percentage = ((music.currentTime * 1000) / this.time) * 100;
+      if (percentage >= 99.8) {
+        this.percentage = 100;
+        await this.next();
       }
+      this.percentage = percentage;
+      this.timer = setTimeout(this.getPercentage, 100);
     },
+    //下一首
     async next() {
-      if (this.currentIndex == this.playlist.length) {
-        this.currentIndex = 0;
+      clearTimeout(this.timer);
+      if (this.currentIndex == this.playlist.length - 1) {
+        // this.currentIndex = 0;
+        this.$store.commit("setPlayIndex", 0);
       } else {
-        this.currentIndex = this.currentIndex + 1;
+        // this.currentIndex = this.currentIndex + 1;
+        this.$store.commit("setPlayIndex", this.currentIndex + 1);
       }
       await this.getSong();
       await this.getSongUrl();
     },
+    //前一首
     async front() {
+      clearTimeout(this.timer);
       if (this.currentIndex == 0) {
-        this.currentIndex = this.playlist.length - 1;
+        // this.currentIndex = this.playlist.length - 1;
+        this.$store.commit("setPlayIndex", this.playlist.length - 11);
       } else {
-        this.currentIndex = this.currentIndex - 1;
+        // this.currentIndex = this.currentIndex - 1;
+        this.$store.commit("setPlayIndex", this.currentIndex - 1);
+      }
+      await this.getSong();
+      await this.getSongUrl();
+    },
+    //单点切换歌曲触发函数
+    async playClick() {
+      clearTimeout(this.timer);
+      if (this.currentIndex >= this.playlist.length) {
+        return;
       }
       await this.getSong();
       await this.getSongUrl();
@@ -221,7 +264,7 @@ export default {
 };
 </script>
   
-  <style lang="scss" >
+  <style lang="scss" scoped>
 .footer {
   width: 100%;
   height: 100%;
@@ -240,9 +283,13 @@ export default {
   .left {
     display: flex;
     align-items: center;
+    flex: 1;
     .pic {
       height: 0.75rem;
       width: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       img {
         height: 100%;
         width: 100%;
@@ -250,16 +297,19 @@ export default {
       }
     }
     .box {
+      flex: 1;
       display: flex;
       flex-direction: column;
       margin-left: 0.1rem;
       color: #333346;
-      div {
+      .nameBox {
         font-size: 0.25rem;
         display: flex;
         align-items: center;
         .name {
-          max-width: 2rem;
+          font-size: 0.25rem;
+          max-width: 3rem;
+          // width: 3rem;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
@@ -271,7 +321,9 @@ export default {
         }
       }
       .artist {
-        max-width: 2rem;
+        font-size: 0.25rem;
+        max-width: 3rem;
+        // width: 3rem;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -279,7 +331,7 @@ export default {
     }
   }
   .middle {
-    flex: 1;
+    flex: 2;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -318,12 +370,13 @@ export default {
         color: #999999;
         margin: 0.1rem;
       }
-      .el-progress-bar {
-        width: 5.3rem;
-      }
+    }
+    .process::v-deep .el-progress-bar {
+      width: 5.3rem;
     }
   }
   .right {
+    flex: 1;
     width: 3rem;
     height: 100%;
     display: flex;
